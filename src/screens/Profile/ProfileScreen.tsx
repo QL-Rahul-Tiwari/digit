@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,12 +8,14 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Colors, Typography, Spacing } from '../../theme';
 import { AUTH_PROFILE_STACK_SCREENS } from '../../constants/screenNames';
 import { useAuthStore } from '../../store/authStore';
+import { fetchMyProfile } from '../../api/users';
 import Avatar from '../../components/Avatar';
 import { formatCount } from '../../utils/formatDate';
 
@@ -30,6 +32,30 @@ const STUB_GRID_POSTS = Array.from({ length: 12 }, (_, i) => ({
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Refresh profile from server whenever screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          setIsRefreshing(true);
+          const freshUser = await fetchMyProfile();
+          if (!cancelled && token) {
+            await setAuth(token, freshUser);
+          }
+        } catch {
+          // Silently fail — show cached user
+        } finally {
+          if (!cancelled) setIsRefreshing(false);
+        }
+      })();
+      return () => { cancelled = true; };
+    }, [token, setAuth]),
+  );
 
   if (!user) return null;
 

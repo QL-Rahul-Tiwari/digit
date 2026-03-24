@@ -67,21 +67,23 @@ export default function CreatePostScreen() {
 
   const handleShare = async () => {
     if (!mediaUri) return;
-    const formData = new FormData();
     const isVideo = mediaType === 'video';
-    formData.append(isVideo ? 'video' : 'image', {
-      uri: mediaUri,
-      type: isVideo ? 'video/mp4' : 'image/jpeg',
-      name: isVideo ? 'post.mp4' : 'post.jpg',
-    } as any);
-    formData.append('caption', caption);
-    formData.append('mediaType', mediaType);
 
-    createPostMutation.mutate(formData, {
-      onSuccess: () => {
-        navigation.goBack();
+    createPostMutation.mutate(
+      {
+        fileUri: mediaUri,
+        mimeType: isVideo ? 'video/mp4' : 'image/jpeg',
+        fileName: isVideo ? 'post.mp4' : 'post.jpg',
+        content: caption,
       },
-    });
+      {
+        onSuccess: () => {
+          setMediaUri('');
+          setCaption('');
+          navigation.goBack();
+        },
+      },
+    );
   };
 
   return (

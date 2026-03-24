@@ -10,6 +10,8 @@ import {
   Platform,
   ScrollView,
   Animated,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -17,18 +19,22 @@ import { useNavigation } from '@react-navigation/native';
 import { Colors, Typography, Spacing } from '../../theme';
 import { useAuthStore } from '../../store/authStore';
 import { pickImageFromGallery } from '../../utils/imageHelpers';
+import { uploadMedia } from '../../api/posts';
+import { updateProfile } from '../../api/users';
 import Avatar from '../../components/Avatar';
 
 export default function EditProfileScreen() {
   const navigation = useNavigation();
   const user = useAuthStore((s) => s.user);
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const token = useAuthStore((s) => s.token);
 
-  const [name, setName] = useState(user?.name ?? '');
   const [username, setUsername] = useState(user?.username ?? '');
-  const [bio, setBio] = useState('');
+  const [bio, setBio] = useState(user?.bio ?? '');
   const [photoUri, setPhotoUri] = useState(user?.profilePhoto ?? '');
+  const [isNewPhoto, setIsNewPhoto] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const nameFocus = useRef(new Animated.Value(0)).current;
   const usernameFocus = useRef(new Animated.Value(0)).current;
   const bioFocus = useRef(new Animated.Value(0)).current;
 
@@ -50,6 +56,40 @@ export default function EditProfileScreen() {
     const image = await pickImageFromGallery();
     if (image) {
       setPhotoUri(image.uri);
+      setIsNewPhoto(true);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      let profilePicture = user?.profilePhoto ?? '';
+
+      // Upload new photo if user picked one
+      if (isNewPhoto && photoUri) {
+        profilePicture = await uploadMedia(photoUri, 'image/jpeg', 'profile.jpg');
+      }
+
+      const updatedUser = await updateProfile({
+        username: username.trim(),
+        bio: bio.trim(),
+        profilePicture,
+      });
+
+      // Persist updated user in auth store
+      if (token) {
+        await setAuth(token, updatedUser);
+      }
+
+      navigation.goBack();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        'Failed to update profile. Please try again.';
+      Alert.alert('Error', typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -70,9 +110,14 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Profile</Text>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={handleSave}
+            disabled={isSaving}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={styles.doneText}>Done</Text>
+            {isSaving ? (
+              <ActivityIndicator size="small" color={Colors.primary} />
+            ) : (
+              <Text style={styles.doneText}>Done</Text>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -90,24 +135,6 @@ export default function EditProfileScreen() {
 
         {/* Fields */}
         <View style={styles.fields}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.fieldLabel}>NAME</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              onFocus={() => animateFocus(nameFocus, true)}
-              onBlur={() => animateFocus(nameFocus, false)}
-            />
-            <Animated.View
-              style={[
-                styles.underline,
-                { backgroundColor: getUnderlineColor(nameFocus) },
-              ]}
-            />
-          </View>
-
           <View style={styles.inputContainer}>
             <Text style={styles.fieldLabel}>USERNAME</Text>
             <TextInput

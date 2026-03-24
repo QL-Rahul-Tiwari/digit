@@ -54,8 +54,12 @@ export default function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
     try {
       const result = await login({ email, password });
       await setAuth(result.token, result.user);
-    } catch {
-      setError('Unable to sign in. Please check your credentials.');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        'Unable to sign in. Please check your credentials.';
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setIsLoading(false);
     }

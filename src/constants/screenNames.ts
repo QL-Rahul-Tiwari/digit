@@ -9,6 +9,7 @@ export const ROOT_SCREENS = {
   AUTH: 'Auth',
   MAIN: 'Main',
   STORY_VIEWER: 'StoryViewer',
+  ADD_STORY: 'AddStory',
 } as const;
 
 // Unauthenticated user screens

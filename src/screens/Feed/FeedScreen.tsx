@@ -42,6 +42,7 @@ export default function FeedScreen() {
     () => data?.pages.flatMap((page: any) => page.posts) ?? [],
     [data],
   );
+  console.log('FeedScreen rendered with posts:', posts);
 
   const handleLike = useCallback(
     (postId: string, isLiked: boolean) => {
@@ -57,6 +58,10 @@ export default function FeedScreen() {
     [navigation],
   );
 
+  const handleAddStory = useCallback(() => {
+    navigation.navigate(ROOT_SCREENS.ADD_STORY);
+  }, [navigation]);
+
   const handleEndReached = useCallback(() => {
     if (hasNextPage) {
       fetchNextPage();
@@ -70,13 +75,15 @@ export default function FeedScreen() {
         <View style={styles.appHeader}>
           <Text style={styles.appTitle}>Digit</Text>
         </View>
-        {/* Stories Row */}
-        {stories && stories.length > 0 && (
-          <StoriesRow stories={stories} onStoryPress={handleStoryPress} />
-        )}
+        {/* Stories Row with Add Story */}
+        <StoriesRow
+          stories={stories ?? []}
+          onStoryPress={handleStoryPress}
+          onAddStory={handleAddStory}
+        />
       </View>
     );
-  }, [stories, handleStoryPress]);
+  }, [stories, handleStoryPress, handleAddStory]);
 
   const renderPost = useCallback(
     ({ item }: { item: Post }) => (

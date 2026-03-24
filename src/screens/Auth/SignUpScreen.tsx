@@ -60,17 +60,21 @@ export default function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
   };
 
   const handleSignUp = async () => {
-    if (!name.trim() || !username.trim() || !email.trim() || !password.trim()) {
+    if (!username.trim() || !email.trim() || !password.trim()) {
       setError('Please fill in all fields');
       return;
     }
     setError('');
     setIsLoading(true);
     try {
-      const result = await register({ name, username, email, password, profilePhoto });
+      const result = await register({ username, email, password, name, profilePhoto });
       await setAuth(result.token, result.user);
-    } catch {
-      setError('Unable to create account. Please try again.');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.error ??
+        'Unable to create account. Please try again.';
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setIsLoading(false);
     }

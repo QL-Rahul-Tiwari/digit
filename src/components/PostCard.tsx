@@ -42,6 +42,7 @@ function PostCardInner({
   const [mediaError, setMediaError] = useState(false);
 
   // Defensive: validate critical post fields
+  console.log('Rendering PostCard with post:', post);
   const safeUser = post?.user ?? { id: '', username: 'unknown', profilePhoto: '' };
   const isVideo = post?.mediaType === 'video' && !!post?.videoUrl;
   const imageSource = post?.imageUrl || PLACEHOLDER_IMAGE;
@@ -147,7 +148,7 @@ function PostCardInner({
       />
     );
   };
-
+console.log('PostCard mediaAspect:',safeUser.profilePhoto);
   return (
     <View style={styles.card}>
       {/* Header */}

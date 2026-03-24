@@ -1,49 +1,94 @@
 import axiosInstance from './axiosInstance';
 import { Post } from '../types';
 
-export async function createPost(formData: FormData): Promise<Post> {
-  // TODO: Implement actual API call
-  // const { data } = await axiosInstance.post<Post>('/api/posts', formData, {
-  //   headers: { 'Content-Type': 'multipart/form-data' },
-  // });
-  // return data;
+/**
+ * Upload a media file (image or video) to the server.
+ * Returns the uploaded media URL.
+ */
+export async function uploadMedia(fileUri: string, mimeType: string, fileName: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('media', {
+    uri: fileUri,
+    type: mimeType,
+    name: fileName,
+  } as any);
 
-  // Stub
-  await new Promise<void>((r) => setTimeout(r, 1000));
+  const { data } = await axiosInstance.post('/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000, // 60s for large files
+  });
+
+  // Backend may return URL in various shapes
+  const responseData = data?.data ?? data;
+  const url: string =
+    responseData?.mediaUrl ??
+    responseData?.url ??
+    responseData?.fileUrl ??
+    responseData?.path ??
+    '';
+
+  if (!url) {
+    throw new Error('Upload succeeded but no media URL returned');
+  }
+
+  return url;
+}
+
+export interface CreatePostPayload {
+  content: string;
+  mediaUrl: string;
+}
+
+/**
+ * Create a new post with content and media URL.
+ */
+export async function createPost(payload: CreatePostPayload): Promise<Post> {
+  const { data } = await axiosInstance.post('/posts', {
+    content: payload.content,
+    mediaUrl: payload.mediaUrl,
+  });
+
+  const responseData = data?.data ?? data;
+  const raw = responseData?.post ?? responseData;
+  const user = raw?.user ?? {};
+
   return {
-    id: 'post-new-' + Date.now(),
+    id: raw.id ?? raw._id ?? '',
     user: {
-      id: 'user-1',
-      name: 'Demo User',
-      username: 'demouser',
-      email: 'demo@test.com',
-      profilePhoto: 'https://i.pravatar.cc/300?u=demouser',
-      postsCount: 43,
-      followersCount: 1234,
-      followingCount: 567,
+      id: user.id ?? user._id ?? '',
+      name: user.name ?? user.username ?? '',
+      username: user.username ?? '',
+      email: user.email ?? '',
+      profilePhoto: user.profilePicture ?? user.profilePhoto ?? user.avatar ?? '',
+      bio: user.bio ?? '',
+      postsCount: user.postsCount ?? 0,
+      followersCount: user.followersCount ?? 0,
+      followingCount: user.followingCount ?? 0,
     },
-    mediaType: 'image',
-    imageUrl: 'https://picsum.photos/seed/new/1080/1080',
-    caption: '',
-    likesCount: 0,
-    commentsCount: 0,
-    isLiked: false,
-    createdAt: new Date().toISOString(),
+    mediaType: raw.mediaType ?? 'image',
+    imageUrl: raw.mediaUrl ?? raw.imageUrl ?? '',
+    videoUrl: raw.videoUrl ?? undefined,
+    thumbnailUrl: raw.thumbnailUrl ?? undefined,
+    caption: raw.content ?? raw.caption ?? '',
+    likesCount: raw.likesCount ?? 0,
+    commentsCount: raw.commentsCount ?? 0,
+    isLiked: raw.isLiked ?? false,
+    createdAt: raw.createdAt ?? new Date().toISOString(),
   };
 }
 
 export async function likePost(postId: string): Promise<{ likesCount: number; isLiked: boolean }> {
-  // TODO: Implement actual API call
-  // const { data } = await axiosInstance.post(`/api/posts/${postId}/like`);
+  // TODO: Wire to real endpoint when available
+  // const { data } = await axiosInstance.post(`/posts/${postId}/like`);
   // return data;
-
-  // Stub
   await new Promise<void>((r) => setTimeout(r, 200));
   return { likesCount: Math.floor(Math.random() * 5000), isLiked: true };
 }
 
 export async function unlikePost(postId: string): Promise<{ likesCount: number; isLiked: boolean }> {
-  // Stub
+  // TODO: Wire to real endpoint when available
+  // const { data } = await axiosInstance.delete(`/posts/${postId}/like`);
+  // return data;
   await new Promise<void>((r) => setTimeout(r, 200));
   return { likesCount: Math.floor(Math.random() * 5000), isLiked: false };
 }

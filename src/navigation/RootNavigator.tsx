@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import AuthNavigator from './AuthNavigator';
 import TabNavigator from './TabNavigator';
 import StoryViewerScreen from '../screens/Feed/StoryViewerScreen';
+import AddStoryScreen from '../screens/Feed/AddStoryScreen';
 import SplashScreen from '../screens/Auth/SplashScreen';
 
 export type RootStackParamList = {
@@ -12,6 +13,7 @@ export type RootStackParamList = {
   [ROOT_SCREENS.AUTH]: undefined;
   [ROOT_SCREENS.MAIN]: undefined;
   [ROOT_SCREENS.STORY_VIEWER]: { initialIndex: number };
+  [ROOT_SCREENS.ADD_STORY]: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -30,7 +32,7 @@ export default function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {false ? (
+      {!isAuthenticated ? (
         <Stack.Screen name={ROOT_SCREENS.AUTH} component={AuthNavigator} />
       ) : (
         <>
@@ -41,6 +43,14 @@ export default function RootNavigator() {
             options={{
               presentation: 'fullScreenModal',
               animation: 'fade',
+            }}
+          />
+          <Stack.Screen
+            name={ROOT_SCREENS.ADD_STORY}
+            component={AddStoryScreen}
+            options={{
+              presentation: 'fullScreenModal',
+              animation: 'slide_from_bottom',
             }}
           />
         </>

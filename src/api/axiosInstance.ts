@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = 'http://localhost:3000'; // Override via env
+const API_URL = 'https://aidan-nonanachronous-exhaustlessly.ngrok-free.dev/api';
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
