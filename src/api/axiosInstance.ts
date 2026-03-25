@@ -1,9 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = 'https://aidan-nonanachronous-exhaustlessly.ngrok-free.dev/api';
+const API_URL = 'http://192.168.1.167:3000/api';
 
-const axiosInstance = axios.create({
+const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: 15000,
   headers: {
@@ -23,13 +23,25 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response interceptor: handle 401
+// Response interceptor: handle 401 + network errors
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       await useAuthStore.getState().clearAuth();
     }
+
+    // Network error handling
+    if (!error.response) {
+      // Log network errors for debugging (in production, send to analytics)
+      console.warn(
+        '[Network Error]',
+        error.code,
+        error.message,
+      );
+    }
+
     return Promise.reject(error);
   },
 );

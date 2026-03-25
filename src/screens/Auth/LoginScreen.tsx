@@ -11,9 +11,11 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
+import Feather from 'react-native-vector-icons/Feather';
 import { Colors, Typography, Spacing } from '../../theme';
 import { login } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
+import { parseApiError } from '../../utils/apiErrors';
 
 interface LoginScreenProps {
   onNavigateSignUp: () => void;
@@ -22,6 +24,7 @@ interface LoginScreenProps {
 export default function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -55,11 +58,8 @@ export default function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
       const result = await login({ email, password });
       await setAuth(result.token, result.user);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        'Unable to sign in. Please check your credentials.';
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      const apiError = parseApiError(err);
+      setError(apiError.message);
     } finally {
       setIsLoading(false);
     }
@@ -107,10 +107,22 @@ export default function LoginScreen({ onNavigateSignUp }: LoginScreenProps) {
               placeholderTextColor={Colors.on_surface_variant}
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!isPasswordVisible}
               onFocus={() => animateFocus(passwordFocus, true)}
               onBlur={() => animateFocus(passwordFocus, false)}
             />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+              accessibilityRole="button">
+              <Feather
+                name={isPasswordVisible ? 'eye' : 'eye-off'}
+                size={20}
+                color={Colors.on_surface_variant}
+              />
+            </TouchableOpacity>
             <Animated.View
               style={[
                 styles.underline,
@@ -176,6 +188,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 0,
+    position: 'relative',
   },
   input: {
     ...Typography.Body_MD,
@@ -183,7 +196,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: Spacing.spacing_3,
     paddingHorizontal: 0,
+    paddingRight: 36,
     backgroundColor: Colors.transparent,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 0,
+    top: Spacing.spacing_3,
   },
   underline: {
     height: 1,

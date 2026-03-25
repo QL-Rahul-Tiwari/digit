@@ -17,6 +17,7 @@ import { Colors, Typography, Spacing } from '../../theme';
 import { register } from '../../api/auth';
 import { useAuthStore } from '../../store/authStore';
 import { pickImageFromGallery } from '../../utils/imageHelpers';
+import { parseApiError } from '../../utils/apiErrors';
 
 interface SignUpScreenProps {
   onNavigateLogin: () => void;
@@ -27,6 +28,7 @@ export default function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -70,11 +72,8 @@ export default function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
       const result = await register({ username, email, password, name, profilePhoto });
       await setAuth(result.token, result.user);
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ??
-        err?.response?.data?.error ??
-        'Unable to create account. Please try again.';
-      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      const apiError = parseApiError(err);
+      setError(apiError.message);
     } finally {
       setIsLoading(false);
     }
@@ -90,28 +89,45 @@ export default function SignUpScreen({ onNavigateLogin }: SignUpScreenProps) {
       autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
       keyboardType?: 'default' | 'email-address';
     },
-  ) => (
-    <View style={styles.inputContainer}>
-      <TextInput
-        style={styles.input}
-        placeholder={placeholder}
-        placeholderTextColor={Colors.on_surface_variant}
-        value={value}
-        onChangeText={onChange}
-        secureTextEntry={options?.secureTextEntry}
-        autoCapitalize={options?.autoCapitalize ?? 'none'}
-        keyboardType={options?.keyboardType ?? 'default'}
-        onFocus={() => animateFocus(focusAnim, true)}
-        onBlur={() => animateFocus(focusAnim, false)}
-      />
-      <Animated.View
-        style={[
-          styles.underline,
-          { backgroundColor: getUnderlineColor(focusAnim) },
-        ]}
-      />
-    </View>
-  );
+  ) => {
+    const isPassword = options?.secureTextEntry;
+    return (
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.on_surface_variant}
+          value={value}
+          onChangeText={onChange}
+          secureTextEntry={isPassword ? !isPasswordVisible : false}
+          autoCapitalize={options?.autoCapitalize ?? 'none'}
+          keyboardType={options?.keyboardType ?? 'default'}
+          onFocus={() => animateFocus(focusAnim, true)}
+          onBlur={() => animateFocus(focusAnim, false)}
+        />
+        {isPassword && (
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+            accessibilityRole="button">
+            <Feather
+              name={isPasswordVisible ? 'eye' : 'eye-off'}
+              size={20}
+              color={Colors.on_surface_variant}
+            />
+          </TouchableOpacity>
+        )}
+        <Animated.View
+          style={[
+            styles.underline,
+            { backgroundColor: getUnderlineColor(focusAnim) },
+          ]}
+        />
+      </View>
+    );
+  };
 
   return (
     <KeyboardAvoidingView
@@ -228,14 +244,22 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.spacing_5,
   },
-  inputContainer: {},
+  inputContainer: {
+    position: 'relative',
+  },
   input: {
     ...Typography.Body_MD,
     color: Colors.on_surface,
     fontSize: 16,
     paddingVertical: Spacing.spacing_3,
     paddingHorizontal: 0,
+    paddingRight: 36,
     backgroundColor: Colors.transparent,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 0,
+    top: Spacing.spacing_3,
   },
   underline: {
     height: 1,
