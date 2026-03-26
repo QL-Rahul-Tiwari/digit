@@ -6,9 +6,9 @@ import {
   AUTH_TAB_SCREENS,
   AUTH_PROFILE_STACK_SCREENS,
 } from '../constants/screenNames';
-import { Colors } from '../theme';
+import { Colors, Spacing } from '../theme';
 import TabBarIcon from '../components/TabBarIcon';
-
+ 
 import FeedScreen from '../screens/Feed/FeedScreen';
 import SearchScreen from '../screens/Search/SearchScreen';
 import CreatePostScreen from '../screens/CreatePost/CreatePostScreen';
@@ -16,7 +16,7 @@ import NotificationsScreen from '../screens/Notifications/NotificationsScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import SettingsScreen from '../screens/Profile/SettingsScreen';
-
+ 
 export type TabParamList = {
   [AUTH_TAB_SCREENS.HOME_TAB]: undefined;
   [AUTH_TAB_SCREENS.SEARCH_TAB]: undefined;
@@ -24,10 +24,10 @@ export type TabParamList = {
   [AUTH_TAB_SCREENS.NOTIFICATIONS_TAB]: undefined;
   [AUTH_TAB_SCREENS.PROFILE_TAB]: undefined;
 };
-
+ 
 // Profile stack for nested navigation
 const ProfileStack = createNativeStackNavigator();
-
+ 
 function ProfileStackScreen() {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
@@ -37,9 +37,9 @@ function ProfileStackScreen() {
     </ProfileStack.Navigator>
   );
 }
-
+ 
 const Tab = createBottomTabNavigator<TabParamList>();
-
+ 
 export default function TabNavigator() {
   return (
     <Tab.Navigator
@@ -114,19 +114,9 @@ export default function TabNavigator() {
     </Tab.Navigator>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   tabBar: {
-    // backgroundColor: Colors.surface_glass,
-    // borderTopWidth: StyleSheet.hairlineWidth,
-    // borderTopColor: Colors.ghost_border_10,
-    // elevation: 0,
-    // position: 'absolute',
-    ...Platform.select({
-      ios: {
-        // Glassmorphism approximation — the actual blur is best on real device
-        // For full blur, use a custom tabBar with BlurView
-      },
-    }),
+    paddingTop:Spacing.spacing_1,
   },
 });

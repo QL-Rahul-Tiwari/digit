@@ -2,12 +2,12 @@ import React from 'react';
 import { StatusBar, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
 import OfflineBanner from './src/components/OfflineBanner';
 import { useNetworkStatus } from './src/hooks/useNetworkStatus';
 import { Colors } from './src/theme';
-
+ 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -27,10 +27,10 @@ const queryClient = new QueryClient({
     },
   },
 });
-
+ 
 function AppContent() {
   const { isOnline } = useNetworkStatus();
-
+ 
   return (
     <>
       <OfflineBanner isVisible={!isOnline} />
@@ -45,12 +45,14 @@ function AppContent() {
     </>
   );
 }
-
+ 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <AppContent />
+        <SafeAreaView edges={['top']} style={{ flex: 1 }}>
+          <AppContent />
+        </SafeAreaView>
       </SafeAreaProvider>
     </QueryClientProvider>
   );

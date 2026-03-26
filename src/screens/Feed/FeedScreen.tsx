@@ -5,6 +5,7 @@ import {
   StyleSheet,
   RefreshControl,
   Text,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Colors, Typography, Spacing } from '../../theme';
@@ -28,6 +29,7 @@ export default function FeedScreen() {
     data,
     isLoading,
     isRefetching,
+    isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
     refetch,
@@ -98,6 +100,16 @@ export default function FeedScreen() {
     [handleLike, navigation],
   );
 
+  const renderLoadingFooter = useCallback(() => {
+    if (!isFetchingNextPage || posts.length === 0) return null;
+    return (
+      <View style={styles.loadingFooter}>
+        <ActivityIndicator size="large" color={Colors.primary_container} />
+        <Text style={styles.loadingText}>Loading more posts...</Text>
+      </View>
+    );
+  }, [isFetchingNextPage, posts.length]);
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -113,6 +125,7 @@ export default function FeedScreen() {
       keyExtractor={(item) => item.id}
       renderItem={renderPost}
       ListHeaderComponent={renderHeader}
+      ListFooterComponent={renderLoadingFooter}
       style={styles.container}
       contentContainerStyle={styles.listContent}
       onEndReached={handleEndReached}
@@ -145,5 +158,16 @@ const styles = StyleSheet.create({
   appTitle: {
     ...Typography.Headline_SM,
     color: Colors.on_surface,
+  },
+  loadingFooter: {
+    paddingBottom: Spacing.spacing_2,
+    paddingHorizontal: Spacing.spacing_4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...Typography.Body_MD,
+    color: Colors.on_surface_variant,
+    marginTop: Spacing.spacing_2,
   },
 });

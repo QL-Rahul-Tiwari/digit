@@ -32,6 +32,7 @@ export default function CreatePostScreen() {
   const [mediaUri, setMediaUri] = useState<string>('');
   const [mediaType, setMediaType] = useState<PickedMediaType>('image');
   const [caption, setCaption] = useState('');
+  const [captionError, setCaptionError] = useState('');
   const createPostMutation = useCreatePost();
 
   const captionFocus = useRef(new Animated.Value(0)).current;
@@ -66,6 +67,16 @@ export default function CreatePostScreen() {
   };
 
   const handleShare = async () => {
+    // Validate caption
+    if (!caption.trim()) {
+      setCaptionError('Caption is required');
+      return;
+    }
+    if (caption.trim().length < 3) {
+      setCaptionError('Caption must be at least 3 characters');
+      return;
+    }
+
     if (!mediaUri) return;
     const isVideo = mediaType === 'video';
 
@@ -80,6 +91,7 @@ export default function CreatePostScreen() {
         onSuccess: () => {
           setMediaUri('');
           setCaption('');
+          setCaptionError('');
           navigation.goBack();
         },
       },
@@ -89,16 +101,19 @@ export default function CreatePostScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={28} color={Colors.on_surface} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New Post</Text>
@@ -118,16 +133,42 @@ export default function CreatePostScreen() {
                 repeat={true}
               />
               <View style={styles.videoTag}>
-                <Ionicons name="videocam" size={14} color={Colors.surface_bright} />
+                <Ionicons
+                  name="videocam"
+                  size={14}
+                  color={Colors.surface_bright}
+                />
                 <Text style={styles.videoTagText}>VIDEO</Text>
               </View>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => {
+                  setMediaUri('');
+                  setMediaType('image');
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name="trash-2" size={18} color="#D32F2F" />
+              </TouchableOpacity>
             </View>
           ) : (
-            <Image
-              source={{ uri: mediaUri }}
-              style={styles.imagePreview}
-              resizeMode="cover"
-            />
+            <View style={styles.imagePreviewContainer}>
+              <Image
+                source={{ uri: mediaUri }}
+                style={styles.imagePreview}
+                resizeMode="cover"
+              />
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => {
+                  setMediaUri('');
+                  setMediaType('image');
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name="trash-2" size={18} color="#D32F2F" />
+              </TouchableOpacity>
+            </View>
           )
         ) : (
           <View style={styles.imagePlaceholder}>
@@ -135,15 +176,25 @@ export default function CreatePostScreen() {
               <TouchableOpacity
                 style={styles.pickButton}
                 onPress={handlePickGallery}
-                activeOpacity={0.7}>
-                <Feather name="image" size={28} color={Colors.on_surface_variant} />
+                activeOpacity={0.7}
+              >
+                <Feather
+                  name="image"
+                  size={28}
+                  color={Colors.on_surface_variant}
+                />
                 <Text style={styles.pickButtonLabel}>GALLERY</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.pickButton}
                 onPress={handlePickCamera}
-                activeOpacity={0.7}>
-                <Feather name="camera" size={28} color={Colors.on_surface_variant} />
+                activeOpacity={0.7}
+              >
+                <Feather
+                  name="camera"
+                  size={28}
+                  color={Colors.on_surface_variant}
+                />
                 <Text style={styles.pickButtonLabel}>CAMERA</Text>
               </TouchableOpacity>
             </View>
@@ -153,11 +204,18 @@ export default function CreatePostScreen() {
         {/* Caption input */}
         <View style={styles.captionContainer}>
           <TextInput
-            style={styles.captionInput}
+            style={
+              captionError
+                ? [styles.captionInput, styles.captionInputError]
+                : styles.captionInput
+            }
             placeholder="Write a caption..."
             placeholderTextColor={Colors.on_surface_variant}
             value={caption}
-            onChangeText={setCaption}
+            onChangeText={text => {
+              setCaption(text);
+              setCaptionError(''); // Clear error as user types
+            }}
             multiline
             maxLength={2200}
             onFocus={() => animateFocus(true)}
@@ -166,17 +224,24 @@ export default function CreatePostScreen() {
           <Animated.View
             style={[styles.underline, { backgroundColor: underlineColor }]}
           />
+          {captionError ? (
+            <Text style={styles.errorText}>{captionError}</Text>
+          ) : null}
         </View>
 
         {/* Share button */}
         <TouchableOpacity
           style={[
             styles.shareButton,
-            (!mediaUri || createPostMutation.isPending) && styles.shareButtonDisabled,
+            (!mediaUri || !caption.trim() || createPostMutation.isPending) &&
+              styles.shareButtonDisabled,
           ]}
           onPress={handleShare}
-          disabled={!mediaUri || createPostMutation.isPending}
-          activeOpacity={0.8}>
+          disabled={
+            !mediaUri || !caption.trim() || createPostMutation.isPending
+          }
+          activeOpacity={0.8}
+        >
           {createPostMutation.isPending ? (
             <ActivityIndicator color={Colors.on_primary} />
           ) : (
@@ -212,10 +277,23 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: SCREEN_WIDTH,
   },
+  imagePreviewContainer: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_WIDTH,
+    position: 'relative',
+  },
   videoPreviewContainer: {
     width: SCREEN_WIDTH,
     height: SCREEN_WIDTH,
     backgroundColor: Colors.on_surface,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: Spacing.spacing_3,
+    right: Spacing.spacing_3,
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+    borderRadius: 999,
+    padding: Spacing.spacing_2,
   },
   videoTag: {
     position: 'absolute',
@@ -223,7 +301,7 @@ const styles = StyleSheet.create({
     right: Spacing.spacing_3,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 1)',
     borderRadius: 4,
     paddingHorizontal: Spacing.spacing_2,
     paddingVertical: 3,
@@ -267,9 +345,18 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     backgroundColor: Colors.transparent,
   },
+  captionInputError: {
+    color: '#E53935',
+  },
   underline: {
     height: 1,
     width: '100%',
+  },
+  errorText: {
+    ...Typography.Body_MD,
+    color: '#E53935',
+    marginTop: Spacing.spacing_2,
+    fontSize: 12,
   },
   shareButton: {
     backgroundColor: Colors.primary_container,
