@@ -17,7 +17,7 @@ import { Colors, Typography, Spacing } from '../../theme';
 import { useStories } from '../../hooks/useStories';
 import Avatar from '../../components/Avatar';
 import { formatRelativeTime } from '../../utils/formatDate';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const STORY_IMAGE_DURATION = 5000;
 
@@ -107,7 +107,7 @@ export default function StoryViewerScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
       <View style={styles.storyContainer}>
         {/* Media: Video or Image */}
         {isVideo && currentStory.videoUrl ? (
@@ -202,6 +202,7 @@ export default function StoryViewerScreen() {
           </View>
         </View>
       </View>
+      </SafeAreaView>
     </View>
   );
 }
